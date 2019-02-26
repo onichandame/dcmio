@@ -21,14 +21,10 @@ This section describes the basic structure and designated usage of **dcmio**
 To run **dcmio**, you need to install python 3.X
 
 ```bash
-./test.py -i <input DICOM path> <-p>
+./test.py -i <input DICOM path(with filename> -o <output csv path(without filename)> <-p>
 ```
 
 Add `-p` if you want to output pixel data instead of DICOM header
-
-The output files are in `./test/` folder
-
-When reading header, the output file is `./test/header.csv`; when reading pixel data, the output file is `./test/pixel.csv`
 
 #### Windows
 
@@ -36,7 +32,7 @@ Don't know yet
 
 ### Basic Structure
 
-The returned object by `dcmRead` is a list of attributes. For definition of attribute, see <http://dicom.nema.org/medical/dicom/current/output/html/part01.html#chapter_3>
+The returned object by calling `dcmRead` is a list of attributes. For definition of attribute, see <http://dicom.nema.org/medical/dicom/current/output/html/part01.html#chapter_3>
 
 Each attribute consists of a `tag` object and a `value` object
 
