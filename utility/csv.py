@@ -10,14 +10,14 @@ def _delete(fileName,path='./test/'):
     if os.path.exists(fullName):
         os.remove(fullName)
 
-def writeToCSV(lst,_is_pixel_):
+def writeToCSV(lst,outpath,_is_pixel_):
     import sys
     from dcmread.algorithm import readPix
     if len(lst)==0:
         raise EmptyListError()
     if _is_pixel_:
-        _delete('pixel')
-        with open("./test/pixel.test",'w') as fileWrite:
+        _delete('pixel',path=outpath)
+        with open(outpath+"pixel.test",'w') as fileWrite:
             writer=csv.writer(fileWrite,delimiter=',')
             pix_attr=None
             for i in lst:
@@ -31,13 +31,13 @@ def writeToCSV(lst,_is_pixel_):
                 raise InvalidPixelDimension()
             pix_val=readPix(pix_attr,width,height)
             writer.writerows(pix_val)
-        os.rename('./test/pixel.test','./test/pixel.csv')
+        os.rename(outpath+'pixel.test',outpath+'pixel.csv')
     else:
-        _delete('header')
-        with open("./test/header.test",'w') as fileWrite:
+        _delete('header',path=outpath)
+        with open(outpath+"header.test",'w') as fileWrite:
             writer=csv.writer(fileWrite,delimiter=',')
             writer.writerow(['Code','VR','VM','Name','Value'])
             for i in lst:
                 if getattr(getattr(i,'tag'),'code')!=0x7fe00010:
                     writer.writerow([format(getattr(getattr(i,'tag'),'code'),'08x'),getattr(getattr(i,'tag'),'VR'),getattr(getattr(i,'tag'),'VM'),getattr(getattr(i,'tag'),'name'),getattr(i,'val')])
-        os.rename('./test/header.test','./test/header.csv')
+        os.rename(outpath+'header.test',outpath+'header.csv')

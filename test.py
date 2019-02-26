@@ -52,7 +52,9 @@ def main():
             _is_pixel_=value
         if key=='filename':
             file_name=value
+        if key=='outpath':
+            outpath=value
     ds=dcmRead(file_name)
-    writeToCSV(ds,_is_pixel_)
+    writeToCSV(ds,outpath,_is_pixel_)
 if __name__=='__main__':
     main()
