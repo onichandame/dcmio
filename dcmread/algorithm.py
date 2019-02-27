@@ -191,11 +191,16 @@ def dcmRead(file_name):
                     name=None
                 encoding=getattr(raw_tag,"encoding")
                 val=readValue(raw_attr)
-                buf_tag=tag(code,VR,VM,name)
-                buf_attr=attribute(buf_tag,val)
                 if code==0x00020000:
                     meta_length=val+testFile.tell()
-                    """
+                if code==0x00020001:
+                    temp_val=val
+                    val=[]
+                    for i in temp_val:
+                        val.append(Struct("B").unpack(i)[0])
+                buf_tag=tag(code,VR,VM,name)
+                buf_attr=attribute(buf_tag,val)
+                """
                 with open("write.test",'ab') as fileWrite:
                     fileWrite.write(str(buf_attr)+'\n')
                     """
@@ -297,6 +302,7 @@ def decodeNum(byte,littleEndian,struct_format):
 """This function decodes OB value(PixelData)
 """
 def decodeOB(byte,littleEndian,struct_format=None):
+    # To do: handle (0002,0001) here
     return byte
 
 """This function decodes UI values(UID). Even Length
