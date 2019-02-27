@@ -5,6 +5,7 @@ from binascii import (a2b_hex, b2a_hex)
 from dcmread.algorithm import dcmRead
 from utility.csv import writeToCSV
 from utility.shell import get_config
+from utility.cmd import printTree
 import sys
 import time
 
