@@ -1,7 +1,8 @@
+# coding: utf-8
 def _get_line_(attr,level):
     lvl_ind='-'
-    lead_char='├'
-    return_char='└'
+    lead_char=b'├'.decode("utf-8","strict")
+    return_char=b'└'.decode("utf-8","strict")
     lead_ind='  '
     tag=getattr(attr,'tag')
     name=getattr(tag,'name')
@@ -33,6 +34,7 @@ def printTree(ds):
         VR=getattr(getattr(temp_ds[index],'tag'),'VR')
         code=getattr(getattr(temp_ds[index],'tag'),'code')
         if VR=='SQ':
+            print getattr(temp_ds[index],'val')[0]
             bak_ds.append(temp_ds)
             temp_ds=getattr(temp_ds[index],'val')
             level=level+1

@@ -62,5 +62,6 @@ def main():
     timer=time.time()
     writeToCSV(ds,outpath,_is_pixel_)
     print ('The writing to csv file takes {} seconds'.format(time.time()-timer))
+    printTree(ds)
 if __name__=='__main__':
     main()
