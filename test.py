@@ -6,6 +6,7 @@ from dcmread.algorithm import dcmRead
 from utility.csv import writeToCSV
 from utility.shell import get_config
 import sys
+import time
 
 """
 #This block is used to test the reading of binary files of 2 methods: getattr() and read().
@@ -54,7 +55,11 @@ def main():
             file_name=value
         if key=='outpath':
             outpath=value
+    timer=time.time()
     ds=dcmRead(file_name)
+    print ('The reading of dcm file takes {} seconds'.format(time.time()-timer))
+    timer=time.time()
     writeToCSV(ds,outpath,_is_pixel_)
+    print ('The writing to csv file takes {} seconds'.format(time.time()-timer))
 if __name__=='__main__':
     main()

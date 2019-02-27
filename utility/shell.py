@@ -16,7 +16,7 @@ def get_config():
             if key=='-i':
                 result['filename']=decodeStr(value,encoding='utf-8')
         if 'pixel' not in result:
-            result['pixel':False]
+            result['pixel']=False
         if 'outpath' not in result:
             result['outpath']="./test/"
         if 'filename' not in result:
