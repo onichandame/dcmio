@@ -21,10 +21,12 @@ This section describes the basic structure and designated usage of **dcmio**
 To run **dcmio**, you need to install python 3.X
 
 ```bash
-./test.py -i <input DICOM path(with filename> -o <output csv path(without filename)> <-p>
+./test.py -i <input DICOM path(with filename> -o <output csv path(without filename)> <-p> <-t>
 ```
 
 Add `-p` if you want to output pixel data instead of DICOM header
+
+Add `-t` if you want to save the tree view diagram in *treeview.txt* in the output path
 
 #### Windows
 

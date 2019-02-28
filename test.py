@@ -5,7 +5,7 @@ from binascii import (a2b_hex, b2a_hex)
 from dcmread.algorithm import dcmRead
 from utility.csv import writeToCSV
 from utility.shell import get_config
-from utility.cmd import printTree
+from utility.treeview import printTree
 import sys
 import time
 
@@ -56,12 +56,15 @@ def main():
             file_name=value
         if key=='outpath':
             outpath=value
+        if key=='tree':
+            if_tree=value
     timer=time.time()
     ds=dcmRead(file_name)
     print ('The reading of dcm file takes {} seconds'.format(time.time()-timer))
     timer=time.time()
     writeToCSV(ds,outpath,_is_pixel_)
     print ('The writing to csv file takes {} seconds'.format(time.time()-timer))
-    printTree(ds)
+    if if_tree:
+        printTree(ds,outpath)
 if __name__=='__main__':
     main()

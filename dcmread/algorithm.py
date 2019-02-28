@@ -188,7 +188,7 @@ def dcmRead(file_name):
                     name=DicomDictionary[code][2]
                 else:
                     VM=None
-                    name=None
+                    name=''
                 encoding=getattr(raw_tag,"encoding")
                 val=readValue(raw_attr)
                 if code==0x00020000:
@@ -410,23 +410,22 @@ def readRawSubAttr(raw_attr,raw_tag,locator):
 """
 def decodeSQ(raw_attr):
     result=[]
-    result.append([])
     leng_max=getattr(getattr(raw_attr,'tag'),'leng')
     locator=0
     while locator<leng_max:
         raw_tag=readTag(raw_attr,locator)
         locator=locator+8
         fin_tag=finTag(raw_tag)
+        raw_attr_sub=readRawSubAttr(raw_attr,raw_tag,locator)
         if getattr(raw_tag,'code')==0xfffee000:
-            result[len(result)-1].append(attribute(fin_tag,None))
+            result.append(attribute(fin_tag,None))
             continue
         if getattr(raw_tag,'VR')=='SQ':
-            result[len(result)-1].append(attribute(fin_tag,None))
-            result.append([])
+            result.append(attribute(fin_tag,decodeSQ(raw_attr_sub)))
+            locator=locator+getattr(raw_tag,'leng')
             continue
-        raw_attr_sub=readRawSubAttr(raw_attr,raw_tag,locator)
         val_sub=readValue(raw_attr_sub,is_sub=True)
-        result[len(result)-1].append(attribute(fin_tag,val_sub))
+        result.append(attribute(fin_tag,val_sub))
         locator=locator+getattr(raw_tag,'leng')
     if locator!=leng_max:
         raise InvalidSQError('The length of the sequence {} is not equal to the length defined in tag'.format(str(raw_attr)))
