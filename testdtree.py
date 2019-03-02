@@ -1,9 +1,12 @@
 import common.dtree
 
 tree=common.dtree.DTree(name='testtree')
-print 'initial tree='+str(tree)
-print 'initial tree info='+str(tree.get_metainfo())
-tree.add_branch('test')
-print 'branch info='+str(tree.get_branch('test').get_metainfo())
-print 'final tree='+str(tree)
-print 'final tree info='+str(tree.get_metainfo())
+print(tree)
+_branches_=('tag','VR','VM','name','value')
+for i in _branches_:
+    tree.add_branch(i)
+for i in range(1,5):
+    for j in _branches_:
+        tree.add_leaf(branch=j,value=j+str(i))
+search=tree.get_attributes(tag='tag3:tag1',VR='VR1',value='value4')
+print (search)

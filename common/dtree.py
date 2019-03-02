@@ -1,6 +1,6 @@
 """This class is inherited from dictionary and represents a column in the table of the evil DICOM
 """
-from error import (BranchNotDeclared,LengthNotEqual)
+from error import (BranchNotDeclared,LengthNotEqual,DuplicatedBranchError)
 class DTree(list):
     __keys__= ('name',)
     def __init__(self,*args,**kwargs):
@@ -34,7 +34,6 @@ class DTree(list):
     def get_branch(self,branchname):
         result=None
         for i in self:
-            print i.get_metainfo()
             if branchname==i.get_metainfo()['name']:
                 result=i
         return result
@@ -51,31 +50,175 @@ class DTree(list):
                 if _first_length_!=len(i):
                     result=False
         return result
+    def _is_duplicated_branch_(self):
+        result=False
+        if len(self)>0:
+            names=[]
+            for i in self:
+                names.append(i.get_metainfo()['name'])
+            if len(names)!=len(set(names)):
+                result=True
+        return result
+    def _num_len_(self,num):
+        #To do: add support for floating point numbers
+        #Currently it only supports integer
+        from math import log10
+        if num>0:
+            result=int(log10(num))+1
+        elif num==0:
+            result=1
+        else:
+            result=int(log10(-n))+2
+        return result
+    def __str__(self,_max_entries_=-1):#To do: add support for length specification
+        if self._is_duplicated_branch_():
+            raise DuplicatedBranchError()
+        if not self._is_equal_length_():
+            raise LengthNotEqual()
+        from copy import deepcopy
+        if _max_entries_==-1 or _max_entries_>len(self[0]):
+            _tree_=self
+        else:
+            _tree_=deepcopy(self)
+            for i in _tree_:
+                _tree_[_tree_.index(i)]=i[:_max_entries_]
+            if not _tree_._is_equal_length_():
+                raise LengthNotEqual()
+        length={}
+        for i in _tree_:
+            length[i.get_metainfo()['name']]=0
+            for j in i:
+                if len(str(j))>length[i.get_metainfo()['name']]:
+                    length[i.get_metainfo()['name']]=len(str(j))
+        if not length:
+            length={'':0}
+        result=''
+        for key,value in _tree_.get_metainfo().items():
+            result=result+key+': '+value+'\r\n'
+        if not _tree_:
+            result=result+'No. of attributes: '+str(0)+'\r\n'
+        else:
+            result=result+'No. of attributes: '+str(len(_tree_[0]))+'\r\n'
+        _total_length_=1
+        for key,value in length.items():
+            _total_length_=_total_length_+value+1
+        result=result+'*'*_total_length_+'\r\n'
+        result=result+'*'*_total_length_+'\r\n'
+        result=result+'+'
+        for key,value in length.items():
+            result=result+'-'*value+'+'
+        result=result+'\r\n|'
+        for key,value in length.items():
+            result=result+key+' '*(value-len(key))+'|'
+        result=result+'\r\n+'
+        for key,value in length.items():
+            result=result+'-'*value+'+'
+        result=result+'\r\n+'
+        for key,value in length.items():
+            result=result+'-'*value+'+'
+        result=result+'\r\n'
+        if _tree_:
+            for i in range(len(_tree_[0])):
+                result=result+'|'
+                for key,value in length.items():
+                    result=result+_tree_.get_branch(key)[i]+' '*(value-len(_tree_.get_branch(key)[i]))+'|'
+                result=result+'\r\n+'
+                for key,value in length.items():
+                    result=result+'-'*value+'+'
+                result=result+'\r\n'
+        return result
     """For the convenience of the caller, this method takes in "branch=<branchname,value=<new value>"
-    and add the <new value> to the end of the appropriate branch. This function also makes sure that
-    all branches are of the equal length. Therefore you should call this function instead of appending
-    to the branch directly
+    and add the <new value> to the end of the appropriate branch. You should call this function instead
+    of appending to the branch directly
     """
     def add_leaf(self,*args,**kwargs):
-        branchname=None
-        new_val=None
+        pair=self._get_pair_(self,*args,**kwargs)
+        self.get_branch(pair['name']).append(pair['value'])
+    def _get_pair_(self,*args,**kwargs):
+        result={}
+        result['name']=None
+        result['value']=None
         for key,value in kwargs.items():
             if key=='branch':
                 for i in self:
                     if value==i.get_metainfo()['name']:
-                        branchname=value
+                        result['name']=value
             if key=='value':
-                new_val=value
-        if branchname==None:
+                result['value']=value
+        if result['name']==None:
             raise BranchNotDeclared()
-        if not self._is_equal_length_(self):
-            raise LengthNotEqual()
-        self.get_branch(branchname).append(new_val)
-        new_index=self.get_branch(branchname).index(new_val)
+        return result
+    def _get_index_(self,*args,**kwargs):
+        if self._is_duplicated_branch_():
+            raise DuplicatedBranchError()
+        _conditions_=self._get_condition_(*args,**kwargs)
+        result=[]
+        for key, value in _conditions_.items():
+            for i in self.get_branch(key):
+                if isinstance(value,list):
+                    if i in value:
+                        result.append(self.get_branch(key).index(i))
+                else:
+                    if i==value:
+                        result.append(self.get_branch(key).index(i))
+        result=set(result)
+        return result
+    def _check_branch_(self,branches):
+        result=branches
+        _name_=[]
         for i in self:
-            if len(i)<(new_index+1):
-                i.append(None)
-    def _get_index_(self,*args,*kwargs):
+            _name_.append(i.get_metainfo()['name'])
+        for i in result:
+            if i not in _name_:
+                del result[result.index(i)]
+        return result
+    def _get_condition_(self,*args,**kwargs):
+        #_operators_=('()',('!=','=='),'!','&&','||') To do: add support for condition in string
+        result={}
+        for key,value in kwargs.items():
+            if key not in result:
+                result[key]=value
+        _checked_branches_=self._check_branch_(list(result.keys()))
+        for key,value in result.items():
+            if key not in _checked_branches_:
+                del result[key]
+        if len(result)==0:
+            raise BranchNotDeclared('you have not specified at least 1 branch. Use syntax branch=\'branch1:branch2\'')
+        for key,value in result.items():
+            if ":" in value:
+                result[key]=value.split(":")
+        return result
+    def _get_branches_(self,*args,**kwargs):
+        result=[]
+        _raw_branch_=None
+        for key,value in kwargs.items():
+            if key=='branch':
+                _raw_branch_=value
+        if not _raw_branch_:
+            raise BranchNotDeclared('you have not specified at least 1 branch. Use syntax branch=\'branch1:branch2\'')
+        result=_raw_branch_.split(":")
+        result=self._check_branch_(result)
+        if len(result)==0:
+            raise BranchNotDeclared()
+        return result
+    def get_attributes(self,*args,**kwargs):
+        _indices_=self._get_index_(*args,**kwargs)
+        result=DTree(name='result')
+        _branches_=[]
+        for i in self:
+            result.add_branch(i.get_metainfo()['name'])
+            _branches_.append(i.get_metainfo()['name'])
+        for i in _indices_:
+            for j in _branches_:
+                result.add_leaf(branch=j,value=self.get_branch(j)[i])
+        if not result._is_equal_length_():
+            raise LengthNotEqual()
+        return result
+    def del_attributes(self,*args,**kwargs):
+        _indices_=self._get_index_(*args,**kwargs)
+        for i in self:
+            for j in _indices_:
+                del i[j]
 
 class DBranch(list):
     __keys__=('name',)
