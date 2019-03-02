@@ -1,8 +1,8 @@
 """This class is inherited from dictionary and represents a column in the table of the evil DICOM
 """
-from error import (BranchNotDeclared,LengthNotEqual,DuplicatedBranchError)
+from error import (BranchNotDeclared,LengthNotEqual,DuplicatedBranchError,BranchNotEqual)
 class DTree(list):
-    __keys__= ('name',)
+    __keys__= ('name','level')
     def __init__(self,*args,**kwargs):
         self.__metainfo__={}
         self.set_metainfo(self,*args,**kwargs)
@@ -219,6 +219,40 @@ class DTree(list):
         for i in self:
             for j in _indices_:
                 del i[j]
+    def get_length(self):
+        if not self._is_equal_length_():
+            raise LengthNotEqual()
+        if not self:
+            return -1
+        elif not self[0]:
+            return 0
+        else:
+            return len(self[0])
+    """This function merges a tree into self. usage: tree1.merge(tree2), result: entries of tree2 are appended
+    to the end of tree1 while losing the metainfo of tree2. Currently only trees with the same set of branches can be merged.
+    """
+    def merge(self,tree):
+        if not isinstance(tree,DTree):
+            raise TypeError('The required argument is of the type DTree.')
+        if not self._is_equal_length_() or tree._is_equal_length_():
+            raise LengthNotEqual()
+        if self._is_duplicated_branch_() or tree._is_duplicated_branch_():
+            raise DuplicatedBranchError()
+        _self_branches_=[]
+        _tree_branches_=[]
+        for i in self:
+            _self_branches_.append(i.get_metainfo()['name'])
+        for i in tree:
+            _tree_branches_.append(i.get_metainfo()['name'])
+        if sorted(_self_branches_) != sorted(_tree_branches_):
+            raise BranchNotEqual()
+        _tree_length_=tree.get_length()
+        if _tree_length_<1:
+            return
+        else:
+            for i in _tree_length_:
+                for j in _self_branches_:
+                    self.add_leaf(branch=j,value=tree.get_branch(j)[i])
 
 class DBranch(list):
     __keys__=('name',)

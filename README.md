@@ -1,6 +1,6 @@
 # dcmio
 
-A simple yet actively developing DICOM input/output toolkit
+A simple yet actively developing DICOM input/output toolkit. Currently only supports Python 3.X
 
 ## Author
 

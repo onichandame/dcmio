@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 from io import BytesIO
 from binascii import (a2b_hex, b2a_hex)
-from dcmread.algorithm import dcmRead
-from utility.csv import writeToCSV
-from utility.shell import get_config
-from utility.treeview import printTree
+from dcmread import dcmRead
+from util import writeToCSV
+from shell import get_config
+from treeview import printTree
 import sys
 import time
 

@@ -1,11 +1,11 @@
 # coding: utf-8
 from __future__ import absolute_import
-from .csv import _delete
-from .error import EmptySequenceError
+from util import _delete
+from error import EmptySequenceError
 def _get_line_(attr,level,is_end):
     lvl_ind='-'
-    lead_char='├'.decode("utf-8","strict")
-    return_char='└'.decode("utf-8","strict")
+    lead_char='├'
+    return_char='└'
     lead_ind='  '
     tag=getattr(attr,'tag')
     name=getattr(tag,'name')
@@ -23,7 +23,7 @@ def printTree(ds,outpath,level=0):
         _delete('treeview.txt',outpath)
         with open(outpath+'treeview.txt','a') as fileWrite:
             heading='DICOM'+'\r\n'+'|'+'\r\n'
-            fileWrite.write(heading.encode('utf-8'))
+            fileWrite.write(heading)
     for i in ds:
         is_end=False
         if i is ds[-1]:
@@ -35,6 +35,6 @@ def printTree(ds,outpath,level=0):
             continue
         line = _get_line_(i,level,is_end)
         with open(outpath+'treeview.txt','a') as fileWrite:
-            fileWrite.write(line.encode('utf-8')+'\r\n')
+            fileWrite.write(line+'\r\n')
         if VR=='SQ':
             printTree(getattr(i,'val'),outpath,level=level+1)

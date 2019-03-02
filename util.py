@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import csv
-from .error import EmptyListError
+from error import EmptyListError
 import os
 
 def _delete(fileName,path='./test/'):
@@ -11,8 +11,6 @@ def _delete(fileName,path='./test/'):
         os.remove(fullName)
 
 def writeToCSV(lst,outpath,_is_pixel_):
-    import sys
-    from dcmread.algorithm import readPix
     if len(lst)==0:
         raise EmptyListError()
     if _is_pixel_:
@@ -29,6 +27,7 @@ def writeToCSV(lst,outpath,_is_pixel_):
                     pix_attr=i
             if not width or not height:
                 raise InvalidPixelDimension()
+            from dcmread import readPix
             pix_val=readPix(pix_attr,width,height)
             writer.writerows(pix_val)
     else:

@@ -1,6 +1,6 @@
-import common.dtree
+import dtree
 
-tree=common.dtree.DTree(name='testtree')
+tree=dtree.DTree(name='testtree')
 print(tree)
 _branches_=('tag','VR','VM','name','value')
 for i in _branches_:

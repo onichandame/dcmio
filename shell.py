@@ -2,8 +2,7 @@ import getopt
 import sys
 from error import InputFileError
 def get_config():
-    sys.path.insert(0,"..")
-    from dcmread.algorithm import decodeStr
+    from dcmread import decodeStr
     result={}
     shortopts='pi:o:t'
     try:
@@ -26,6 +25,6 @@ def get_config():
         if 'tree' not in result:
             result['tree']=False
     except getopt.GetoptError as e:
-        print 'lol'
+        print ('lol')
         sys.exit(1)
     return result
