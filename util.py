@@ -23,11 +23,15 @@ def _delete(*args,**kwargs):
 def write_to_csv(_tree_,outpath,file_name,_is_pixel_):
     from copy import deepcopy
     tree=deepcopy(_tree_)
+    file_name=os.path.basename(file_name)
     tree.del_attributes(tag=0x7fe00010)
     if len(tree)==0:
         raise EmptyListError()
     _delete(suffix='header.csv',path=outpath,filename=file_name)
-    with open(outpath+file_name+"-header.csv",'w') as fileWrite:
+    fullname=outpath+file_name+'-header.csv'
+    print (file_name)
+    print (fullname)
+    with open(fullname,'w') as fileWrite:
         writer=csv.writer(fileWrite,delimiter=',')
         _branches_=[]
         for i in tree:

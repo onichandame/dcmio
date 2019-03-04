@@ -5,7 +5,6 @@ from binascii import (a2b_hex, b2a_hex)
 from dcmread import dcm_read
 from util import write_to_csv
 from shell import get_config
-from treeview import printTree
 import sys
 import time
 
@@ -62,5 +61,8 @@ def main():
     dcm=dcm_read(file_name)
     print ('The reading of dcm file takes {} seconds'.format(time.time()-timer))
     write_to_csv(dcm,outpath,file_name,_is_pixel_)
+    if if_tree:
+        from treeview import write_tree
+        write_tree(tree,outpath,file_name)
 if __name__=='__main__':
     main()

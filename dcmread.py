@@ -310,7 +310,7 @@ def read_attribute_leng(read,**kwargs):
         val=sqval_leng[0]
     return (attribute(getattr(fine_metadata,'tag'),getattr(fine_metadata,'VR'),getattr(fine_metadata,'VM'),getattr(fine_metadata,'name'),val),offset)
 
-def read_sequence_leng(read):
+def read_sequence_leng(read,**kwargs):
     implicity=False
     littleEndian=True
     encoding=default_encoding
@@ -357,7 +357,7 @@ def read_item_leng(read,**kwargs):
             level=value
         elif key=='index':
             index=value
-    result.set_metainfo(name='item'+index+1,level=level,index=index+1)
+    result.set_metainfo(name='item'+str(index+1),level=level,index=index+1)
     meta_leng=read_raw_meta_leng(read,**kwargs)
     if getattr(meta_leng[0],'tag') != 0xfffee000:
         raise ItemNotFound()
