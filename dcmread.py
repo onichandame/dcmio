@@ -1,5 +1,5 @@
 from struct import (calcsize,unpack)
-from error import (InvalidSQError,InvalidPixelDimension)
+from error import (InvalidSQError,InvalidPixelDimension,ItemNotFound,VRNotSpecified)
 from collections import namedtuple
 from struct import (Struct, pack, unpack)
 from dtree import DTree
@@ -110,7 +110,7 @@ def genRawAttribute(testFile,read):
         VR='UN'
     if leng !=0xFFFFFFFF:  #check if the length is -1 or not. For VR='SQ', length could be -1. not considered yet
         val=read(leng)
-        if tag=0x00080005:
+        if tag==0x00080005:
             encoding=convertEncoding(val,littleEndian)
             if not encoding:
                 raise InvalidEncodingError()
@@ -147,7 +147,7 @@ def genRawAttribute(testFile,read):
         else:
             """
 
-def isDICOM(read):
+def is_dicom(read):
     result=False
     byte=read(128)  # Preamble. Currently useless
     byte=read(4)
@@ -183,10 +183,10 @@ def dcmRead(file_name):
                     """
                 raw_tag=raw_attr[0]
                 val=raw_attr[1]
-                _fine_metadata_=fine_metadata(raw_attr[1])
+                fine_metadata=_fine_metadata_(raw_attr[1])
                 for i in _branches_:
                     if i != 'value':
-                        result.add_leaf(branch=i,value=getattr(_fine_metadata_,i))
+                        result.add_leaf(branch=i,value=getattr(fine_metadata,i))
                 result.add_leaf(branch=_branches_[4],value=readValue(raw_attr))
                 if tag==0x00020000:
                     meta_length=val+testFile.tell()
@@ -198,8 +198,23 @@ def dcmRead(file_name):
             pass
     return result
 
+def dcm_read(filename):
+    import os
+    result=DTree(name=os.path.basename(filename),level=0,index=0)
+    for i in _branches_:
+        result.add_branch(i)
+    with open(filename,'rb') as fp:
+        read=getattr(fp,'read')
+        if not is_dicom(read):
+            raise InvalidDicomError()
+        metainfo=read_metainfo(read)
+        result.merge(metainfo)
+        dataset=read_dataset(read,metainfo)
+        result.merge(dataset)
+    return result
+
 def read_metainfo(read):
-    result=DTree()
+    result=DTree(name='metainfo',level=0)
     for i in _branches_:
         result.add_branch(i)
     implicity=False
@@ -207,21 +222,67 @@ def read_metainfo(read):
     meta_length=0
     locator=0
     encoding=default_encoding
-    result.merge(read_attribute_leng(read,implicity=implicity,littleEndian=littleEndian,encoding=encoding)[0])
-    if not result.get_attributes(tag=0x00020000):
+    file_meta_leng=read_attribute_leng(read,implicity=implicity,littleEndian=littleEndian,encoding=encoding,level=0)[0]
+    if getattr(file_meta_leng,'tag') != 0x00020000:
         raise InvalidDicomError('The file is either broken or incomplete. Contact the provider of the file for help')
     else:
-        meta_length=result.get_attributes(tag=0x00020000).get_branch('value')[0]
+        result.add_attribute(file_meta_leng)
+        meta_length=getattr(file_meta_leng,'value')
     while locator<meta_length:
         attr_leng=read_attribute_leng(read)
-        result.merge(attr_leng[0])
+        result.add_attribute(attr_leng[0])
         locator=locator+attr_leng[1]
+    return result
+
+def read_dataset(read,metainfo):
+    result=DTree()
+    if not isinstance(metainfo,DTree):
+        raise TypeError('The metainfo passed to dataset reader is not of the type DTree')
+    for i in _branches_:
+        result.add_branch(i)
+    imp_le=metainfo.get_value(tag=0x00020010)
+    if imp_le.endswith(' ') or imp_le.endswith('\x00'):
+        imp_le=imp_le[:-1]
+    if imp_le==ExplicitVRLittleEndian:
+        implicity=False
+        littleEndian=True
+    elif imp_le==ImplicitVRLittleEndian:
+        implicity=True
+        littleEndian=True
+    elif imp_le==ExplicitVRBigEndian:
+        implicity=False
+        littleEndian=False
+    elif imp_le==DeflatedExplicitVRLittleEndian:
+        zipped=read()
+        unzipped=zlib.decompress(zipped,-zlib.MAX_WBITS)
+        read=getattr(BytesIO(unzipped),"read")
+        self.read=read
+        implicity=False
+        littleEndian=True
+    else:
+        implicity=True
+        littleEndian=True
+    encoding=default_encoding
+    charset=read_attribute_leng(read,implicity=implicity,littleEndian=littleEndian,encoding=encoding)
+    if getattr(charset[0],'tag') != 0x00080005:
+        raise InvalidDicomError('Couldn\'t find the expected (0008,0005) attribute')
+    encoding=convert_encoding(getattr(charset[0],'value'),littleEndian)
+    try:
+        while True:
+            attr_leng=read_attribute_leng(read,implicity=implicity,littleEndian=littleEndian,encoding=encoding,level=0)
+            if not attr_leng:
+                raise StopIteration
+            else:
+                result.add_attribute(attr_leng[0])
+    except StopIteration:
+        pass
     return result
 
 def read_attribute_leng(read,**kwargs):
     implicity=False
     littleEndian=True
     encoding=default_encoding
+    level=0
     for key,value in kwargs.items():
         if key=='implicity':
             implicity=value
@@ -229,24 +290,32 @@ def read_attribute_leng(read,**kwargs):
             littleEndian=value
         elif key=='encoding':
             encoding=value
+        elif key=='level':
+            level=value
     offset=0
     raw_info_leng=read_raw_meta_leng(read,**kwargs)
+    if raw_info_leng==b'':
+        return None
     fine_metadata=_fine_metadata_(raw_info_leng[0])
     if getattr(fine_metadata,'VR')!='SQ':
         offset=offset+raw_info_leng[1]+getattr(raw_info_leng[0],'leng')
         raw_val=read(getattr(raw_info_leng[0],'leng'))
-        val=read_value(raw_val,**kwargs) #To do: unfinished
+        val=read_value(raw_val,getattr(fine_metadata,'VR'),**kwargs)
     else:
-        sqval_leng=read_sequence_leng(read,**kwargs)
+        offset=offset+raw_info_leng[1]
+        sqval_leng=read_sequence_leng(read,**dict(kwargs,length=getattr(raw_info_leng[0],'leng')))
         if sqval_leng[1]!=getattr(raw_info_leng[0],'leng'):
             raise InvalidDicomError('Detected a mismatch of the sum of length of items and the length of the sequence')
-    return (attribute(getattr(_fine_metadata_,'tag'),getattr(_fine_metadata_,'VR'),getattr(_fine_metadata_,'VM'),getattr(_fine_metadata_,'name'),val),offset)
+        offset=offset+getattr(raw_info_leng[0],'leng')
+        val=sqval_leng[0]
+    return (attribute(getattr(fine_metadata,'tag'),getattr(fine_metadata,'VR'),getattr(fine_metadata,'VM'),getattr(fine_metadata,'name'),val),offset)
 
 def read_sequence_leng(read):
-    offset=0
     implicity=False
     littleEndian=True
     encoding=default_encoding
+    level=0
+    length=0
     for key,value in kwargs.items():
         if key=='implicity':
             implicity=value
@@ -254,9 +323,53 @@ def read_sequence_leng(read):
             littleEndian=value
         elif key=='encoding':
             encoding=value
-    raw_meta_leng=read_raw_meta_leng(read,**kwargs)
-    offset=offset+raw_meta_leng[1]
-    #To do: unfinished
+        elif key=='level':
+            level=value
+        elif key=='length':
+            length=value
+    offset=0
+    result=[]
+    index=0
+    while offset<length: #To do: add support of undefined length
+        item_leng=read_item_leng(read,implicity=implicity,littleEndian=littleEndian,encoding=encoding,level=level,index=index)
+        result.append(item_leng[0])
+        offset=offset+item_leng[1]
+        index=index+1
+    return (result,offset)
+
+def read_item_leng(read,**kwargs):
+    result=DTree()
+    for i in _branches_:
+        result.add_branch(i)
+    offset=0
+    implicity=False
+    littleEndian=True
+    encoding=default_encoding
+    level=0
+    for key,value in kwargs.items():
+        if key=='implicity':
+            implicity=value
+        elif key=='littleEndian':
+            littleEndian=value
+        elif key=='encoding':
+            encoding=value
+        elif key=='level':
+            level=value
+        elif key=='index':
+            index=value
+    result.set_metainfo(name='item'+index+1,level=level,index=index+1)
+    meta_leng=read_raw_meta_leng(read,**kwargs)
+    if getattr(meta_leng[0],'tag') != 0xfffee000:
+        raise ItemNotFound()
+    offset=offset+meta_leng[1]
+    item_max_leng=getattr(meta_leng[0],'leng')
+    item_offset=0
+    while item_offset<item_max_leng:
+        attr_leng=read_attribute_leng(read,**kwargs)
+        offset=offset+attr_leng[1]
+        item_offset=item_offset+attr_leng[1]
+        result.add_attribute(attr_leng[0])
+    return (result,offset)
 
 def read_raw_meta_leng(read,**kwargs):
     offset=0
@@ -271,8 +384,8 @@ def read_raw_meta_leng(read,**kwargs):
     raw_metadata=read(8)
     offset=offset+8
     if len(raw_metadata)<8:
-        return
-    tag_struct_unpack=_set_struct_unpack_(local_implicity,local_littleEndian)
+        return b''
+    tag_struct_unpack=_set_struct_unpack_(implicity,littleEndian)
     if implicity:
         VR=None
         group,elem,leng=tag_struct_unpack(raw_metadata)
@@ -282,7 +395,7 @@ def read_raw_meta_leng(read,**kwargs):
         if VR in extra_length_VRs:
             extra_leng=read(4)
             offset=offset+4
-            extra_leng_struct_unpack=_set_struct_unpack_(local_implicity,local_littleEndian,True)
+            extra_leng_struct_unpack=_set_struct_unpack_(implicity,littleEndian,True)
             leng=extra_leng_struct_unpack(extra_leng)[0]
     tag=integrate_tag(group,elem)
     if implicity and tag in DicomDictionary:
@@ -291,6 +404,32 @@ def read_raw_meta_leng(read,**kwargs):
         VR='UN'
     return (raw_info(tag,VR,leng),offset)
 
+def read_value(raw_val,VR,**kwargs):
+    implicity=False
+    littleEndian=True
+    encoding=default_encoding
+    level=0
+    for key,value in kwargs.items():
+        if key=='implicity':
+            implicity=value
+        elif key=='littleEndian':
+            littleEndian=value
+        elif key=='encoding':
+            encoding=value
+    if not VR:
+        raise VRNotSpecified()
+    if VR not in converters:
+        raise NotImplementedError('Unknown Value Representation {}'.format(VR))
+    if isinstance(converters[VR],tuple):
+        converter,struct_format=converters[VR]
+    else:
+        converter=converters[VR]
+        struct_format=None
+    if VR in text_VRs or VR == 'PN':
+        result=converter(raw_val,littleEndian,None,encoding)
+    else:
+        result=converter(raw_val,littleEndian,struct_format)
+    return result
 """This function reads in bytes and return the human-readable value.
 """
 def readValue(raw_attr,level=None):
@@ -464,7 +603,7 @@ def _read_raw_info_(raw_attr,locator):
 
 """This function takes in a raw_info instance and returns a tag instance
 """
-def fine_metadata(raw_tag):
+def _fine_metadata_(raw_tag):
     result=None
     tag=getattr(raw_tag,'tag')
     VR=getattr(raw_tag,'VR')
@@ -502,7 +641,7 @@ def decodeSQ(raw_attr,level):
         fin_tag=_fine_metadata_(raw_tag)
         for i in _branches_:
             if i != 'value':
-                result.add_leaf(branch=i,value=getattr(_fine_metadata_,i))
+                result.add_leaf(branch=i,value=getattr(fine_metadata,i))
         raw_attr_sub=_read_raw_sub_attr_(raw_attr,raw_info,locator)
         if getattr(raw_tag,'tag')==0xfffee000: # To do: add support for itemization
             continue
@@ -545,7 +684,7 @@ def decodeAT(byte,littleEndian,struct_format=None):
 """This function converts the encoding string decoded by decodeStr()
    If receives False, assume the default encoding
 """
-def convertEncoding(byte,littleEndian):
+def convert_encoding(byte,littleEndian):
     encoding_list=decodeStr(byte,littleEndian,None,default_encoding,"\\")
     if not encoding_list:
         result=default_encoding
@@ -561,9 +700,17 @@ def convertEncoding(byte,littleEndian):
 
 """This function is used only when writing pixel data to csv file
 """
-def readPix(pix_attr,width,height):
+def pix_matrix(*args,**kwargs):
+    for key,value in kwargs.items():
+        if key=='pixel_data':
+            raw_pix=value
+        elif key=='width':
+            width=value
+        elif key=='height':
+            height=value
+    if not raw_pix or not width or not height:
+        raise SyntaxError('pix_matrix did not receive enough arguments')
     result=[]
-    raw_pix=getattr(pix_attr,'val')
     locator=0
     pixUnpack=Struct('<h').unpack
     for i in range(0,height):
@@ -572,7 +719,7 @@ def readPix(pix_attr,width,height):
             result[len(result)-1].append(pixUnpack(raw_pix[locator:locator+2])[0])
             locator=locator+2
     if locator!=2*width*height:
-        raise InvalidPixelDimension('The readPix method is broken')
+        raise InvalidPixelDimension('The pix_matrix method is broken')
     return result
 
 

@@ -73,3 +73,21 @@ class BranchNotEqual(Exception):
             args=('The branches selected for merge have different branches', )
         Exception.__init__(self,*args)
 
+class ValueNotUnique(Exception):
+    def __init__(self, *args):
+        if not args:
+            args=('The searched result has more than 1 entry', )
+        Exception.__init__(self,*args)
+
+class ItemNotFound(Exception):
+    def __init__(self, *args):
+        if not args:
+            args=('expect an item but not found', )
+        Exception.__init__(self,*args)
+
+class VRNotSpecified(Exception):
+    def __init__(self, *args):
+        if not args:
+            args=('Trying to read an attribute with no VR specified. Check the code', )
+        Exception.__init__(self,*args)
+

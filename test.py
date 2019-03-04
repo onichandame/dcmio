@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 from io import BytesIO
 from binascii import (a2b_hex, b2a_hex)
-from dcmread import dcmRead
-from util import writeToCSV
+from dcmread import dcm_read
+from util import write_to_csv
 from shell import get_config
 from treeview import printTree
 import sys
@@ -59,12 +59,8 @@ def main():
         if key=='tree':
             if_tree=value
     timer=time.time()
-    ds=dcmRead(file_name)
+    dcm=dcm_read(file_name)
     print ('The reading of dcm file takes {} seconds'.format(time.time()-timer))
-    timer=time.time()
-    writeToCSV(ds,outpath,_is_pixel_)
-    print ('The writing to csv file takes {} seconds'.format(time.time()-timer))
-    if if_tree:
-        printTree(ds,outpath)
+    write_to_csv(dcm,outpath,file_name,_is_pixel_)
 if __name__=='__main__':
     main()

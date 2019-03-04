@@ -16,12 +16,12 @@ def _get_line_(attr,level,is_end):
     line=lead_ind*level+lead_char+lvl_ind+VR+','+name
     return line
 
-def printTree(ds,outpath,level=0):
+def write_tree(ds,outpath,file_name,level=0):
     if len(ds)==0:
         raise EmptySequenceError('empty sequence is not yet supported') #To do: add support of empty sequence
     if level==0:
-        _delete('treeview.txt',outpath)
-        with open(outpath+'treeview.txt','a') as fileWrite:
+        _delete(suffix='treeview.txt',path=outpath,filename=file_name)
+        with open(outpath+filename+'-treeview.txt','a') as fileWrite:
             heading='DICOM'+'\r\n'+'|'+'\r\n'
             fileWrite.write(heading)
     for i in ds:

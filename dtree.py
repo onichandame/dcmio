@@ -1,8 +1,8 @@
 """This class is inherited from dictionary and represents a column in the table of the evil DICOM
 """
-from error import (BranchNotDeclared,LengthNotEqual,DuplicatedBranchError,BranchNotEqual)
+from error import (BranchNotDeclared,LengthNotEqual,DuplicatedBranchError,BranchNotEqual,ValueNotUnique)
 class DTree(list):
-    __keys__= ('name','level')
+    __keys__= ('name','level','index')
     def __init__(self,*args,**kwargs):
         self.__metainfo__={}
         self.set_metainfo(self,*args,**kwargs)
@@ -75,10 +75,10 @@ class DTree(list):
             raise DuplicatedBranchError()
         if not self._is_equal_length_():
             raise LengthNotEqual()
-        from copy import deepcopy
         if _max_entries_==-1 or _max_entries_>len(self[0]):
             _tree_=self
         else:
+            from copy import deepcopy
             _tree_=deepcopy(self)
             for i in _tree_:
                 _tree_[_tree_.index(i)]=i[:_max_entries_]
@@ -86,7 +86,7 @@ class DTree(list):
                 raise LengthNotEqual()
         length={}
         for i in _tree_:
-            length[i.get_metainfo()['name']]=0
+            length[i.get_metainfo()['name']]=len(i.get_metainfo()['name'])
             for j in i:
                 if len(str(j))>length[i.get_metainfo()['name']]:
                     length[i.get_metainfo()['name']]=len(str(j))
@@ -94,7 +94,7 @@ class DTree(list):
             length={'':0}
         result=''
         for key,value in _tree_.get_metainfo().items():
-            result=result+key+': '+value+'\r\n'
+            result=result+key+': '+str(value)+'\r\n'
         if not _tree_:
             result=result+'No. of attributes: '+str(0)+'\r\n'
         else:
@@ -121,7 +121,7 @@ class DTree(list):
             for i in range(len(_tree_[0])):
                 result=result+'|'
                 for key,value in length.items():
-                    result=result+_tree_.get_branch(key)[i]+' '*(value-len(_tree_.get_branch(key)[i]))+'|'
+                    result=result+str(_tree_.get_branch(key)[i])+' '*(value-len(str(_tree_.get_branch(key)[i])))+'|'
                 result=result+'\r\n+'
                 for key,value in length.items():
                     result=result+'-'*value+'+'
@@ -185,8 +185,9 @@ class DTree(list):
         if len(result)==0:
             raise BranchNotDeclared('you have not specified at least 1 branch. Use syntax branch=\'branch1:branch2\'')
         for key,value in result.items():
-            if ":" in value:
-                result[key]=value.split(":")
+            if isinstance(value,str):
+                if ":" in value:
+                    result[key]=value.split(":")
         return result
     def _get_branches_(self,*args,**kwargs):
         result=[]
@@ -228,13 +229,23 @@ class DTree(list):
             return 0
         else:
             return len(self[0])
+    def get_value(self,*args,**kwargs):
+        searched=self.get_attributes(*args,**kwargs)
+        if searched.get_length()==1:
+            result=searched.get_branch('value')[0]
+        elif searched.get_length()==0:
+            return None
+        else:
+            raise ValueNotUnique()
+        return result
+
     """This function merges a tree into self. usage: tree1.merge(tree2), result: entries of tree2 are appended
     to the end of tree1 while losing the metainfo of tree2. Currently only trees with the same set of branches can be merged.
     """
     def merge(self,tree):
         if not isinstance(tree,DTree):
             raise TypeError('The required argument is of the type DTree.')
-        if not self._is_equal_length_() or tree._is_equal_length_():
+        if not self._is_equal_length_() or not tree._is_equal_length_():
             raise LengthNotEqual()
         if self._is_duplicated_branch_() or tree._is_duplicated_branch_():
             raise DuplicatedBranchError()
@@ -250,9 +261,25 @@ class DTree(list):
         if _tree_length_<1:
             return
         else:
-            for i in _tree_length_:
+            for i in range(_tree_length_):
                 for j in _self_branches_:
                     self.add_leaf(branch=j,value=tree.get_branch(j)[i])
+    def add_attribute(self,attr):
+        from dcmread import attribute
+        if not isinstance(attr,attribute):
+            raise TypeError('The required type is attribute but received {}'.format(type(attr)))
+        if self._is_duplicated_branch_():
+            raise DuplicatedBranchError()
+        if not self._is_equal_length_():
+            raise LengthNotEqual()
+        _names_=[]
+        for i in self:
+            _names_.append(i.get_metainfo()['name'])
+        _names_=tuple(_names_)
+        if _names_ != attr._fields:
+            raise BranchNotEqual('The tree selected has different branches than the attribute passed')
+        for i in _names_:
+            self.add_leaf(branch=i,value=getattr(attr,i))
 
 class DBranch(list):
     __keys__=('name',)

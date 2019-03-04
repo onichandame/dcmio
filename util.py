@@ -1,40 +1,51 @@
 from __future__ import absolute_import
 import csv
 from error import EmptyListError
+from dtree import DTree
 import os
 
-def _delete(fileName,path='./test/'):
-    fullName=path+fileName
+def _delete(*args,**kwargs):
+    for key,value in kwargs.items():
+        if key=='suffix':
+            suffix=value
+        elif key=='path':
+            path=value
+        elif key=='filename':
+            filename=value
+    if not suffix or not path or not filename:
+        raise SyntaxError('The _delete function requires all arguments to be defined')
+    fullname=path+filename+'-'+suffix
     if not os.path.exists(path):
         os.mkdir(path)
-    if os.path.exists(fullName):
-        os.remove(fullName)
+    if os.path.exists(fullname):
+        os.remove(fullname)
 
-def writeToCSV(lst,outpath,_is_pixel_):
-    if len(lst)==0:
+def write_to_csv(_tree_,outpath,file_name,_is_pixel_):
+    from copy import deepcopy
+    tree=deepcopy(_tree_)
+    tree.del_attributes(tag=0x7fe00010)
+    if len(tree)==0:
         raise EmptyListError()
+    _delete(suffix='header.csv',path=outpath,filename=file_name)
+    with open(outpath+file_name+"-header.csv",'w') as fileWrite:
+        writer=csv.writer(fileWrite,delimiter=',')
+        _branches_=[]
+        for i in tree:
+            _branches_.append(i.get_metainfo()['name'])
+        writer.writerow(_branches_)
+        for i in range(tree.get_length()):
+            lst=[]
+            for j in tree:
+                lst.append(j[i])
+            writer.writerow(lst)
     if _is_pixel_:
-        _delete('pixel.csv',path=outpath)
-        with open(outpath+"pixel.csv",'w') as fileWrite:
+        _delete(suffix='pixel.csv',filename=file_name,path=outpath)
+        with open(outpath+file_name+"-pixel.csv",'w') as fileWrite:
             writer=csv.writer(fileWrite,delimiter=',')
             pix_attr=None
-            for i in lst:
-                if getattr(getattr(i,'tag'),'code')==0x00280011:
-                    width=int(getattr(i,'val'))
-                elif getattr(getattr(i,'tag'),'code')==0x00280010:
-                    height=int(getattr(i,'val'))
-                elif getattr(getattr(i,'tag'),'code')==0x7fe00010:
-                    pix_attr=i
-            if not width or not height:
-                raise InvalidPixelDimension()
-            from dcmread import readPix
-            pix_val=readPix(pix_attr,width,height)
+            width=_tree_.get_value(tag=0x00280011)
+            height=_tree_.get_value(tag=0x00280010)
+            pixel_data=_tree_.get_value(tag=0x7fe00010)
+            from dcmread import pix_matrix
+            pix_val=pix_matrix(pixel_data=pixel_data,width=width,height=height)
             writer.writerows(pix_val)
-    else:
-        _delete('header.csv',path=outpath)
-        with open(outpath+"header.csv",'w') as fileWrite:
-            writer=csv.writer(fileWrite,delimiter=',')
-            writer.writerow(['Code','VR','VM','Name','Value'])
-            for i in lst:
-                if getattr(getattr(i,'tag'),'code')!=0x7fe00010:
-                    writer.writerow([format(getattr(getattr(i,'tag'),'code'),'08x'),getattr(getattr(i,'tag'),'VR'),getattr(getattr(i,'tag'),'VM'),getattr(getattr(i,'tag'),'name'),getattr(i,'val')])
