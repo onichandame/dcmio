@@ -194,18 +194,11 @@ class DTree(list):
                 if ":" in value:
                     result[key]=value.split(":")
         return result
-    def _get_branches_(self,*args,**kwargs):
+    def _get_branches_(self):
         result=[]
         _raw_branch_=None
-        for key,value in kwargs.items():
-            if key=='branch':
-                _raw_branch_=value
-        if not _raw_branch_:
-            raise BranchNotDeclared('you have not specified at least 1 branch. Use syntax branch=\'branch1:branch2\'')
-        result=_raw_branch_.split(":")
-        result=self._check_branch_(result)
-        if len(result)==0:
-            raise BranchNotDeclared()
+        for i in self:
+            result.append(i.get_metainfo()['name'])
         return result
     def get_attributes(self,*args,**kwargs):
         _indices_=self._get_index_(*args,**kwargs)
@@ -235,19 +228,28 @@ class DTree(list):
         else:
             return len(self[0])
     def get_value(self,*args,**kwargs):
-        if len(args)==1:
-            if isinstance(args[0],int):
-                return self.get_branch('value')[args[0]]
+        if args:
+            if len(args)==1:
+                _field_=args[0]
             else:
-                raise TypeError('The required type is integer but received {}'.format(type(args[0])))
-        searched=self.get_attributes(*args,**kwargs)
-        if searched.get_length()==1:
-            result=searched.get_branch('value')[0]
-        elif searched.get_length()==0:
-            return None
+                raise NotImplementedError('The expected args must be unique')
         else:
-            raise ValueNotUnique()
-        return result
+            _field_='value'
+        if isinstance(_field_,int):
+            return self.get_branch('value')[_field_]
+        elif isinstance(_field_,str):
+            if _field_ not in self._get_branches_():
+                raise TypeError('The received branch name is not present in the tree')
+            searched=self.get_attributes(*args,**kwargs)
+            if searched.get_length()==1:
+                result=searched.get_branch(_field_)[0]
+            elif searched.get_length()==0:
+                return None
+            else:
+                raise ValueNotUnique()
+            return result
+        else:
+            raise TypeError('The expected type is str or int but received {}'.format(type(_field_)))
 
     """This function merges a tree into self. usage: tree1.merge(tree2), result: entries of tree2 are appended
     to the end of tree1 while losing the metainfo of tree2. Currently only trees with the same set of branches can be merged.
@@ -290,6 +292,22 @@ class DTree(list):
             raise BranchNotEqual('The tree selected has different branches than the attribute passed')
         for i in _names_:
             self.add_leaf(branch=i,value=getattr(attr,i))
+    def set_value(self,newval,*args,**kwargs):
+        if self._is_duplicated_branch_():
+            raise DuplicatedBranchError()
+        if not self._is_equal_length_():
+            raise LengthNotEqual()
+        _indices_=self._get_index_(*args,**kwargs)
+        if len(_indices_)!=1:
+            raise TypeError('The condition specified has no matched result')
+        for i in _indices_:
+            _indices_=i
+            break
+        if len(args)!=1:
+            raise TypeError('The specified branch must be unique')
+        if args[0] not in self._get_branches_():
+            raise BranchNotDeclared('The specified branch is not present')
+        self.get_branch(args[0])[_indices_]=newval
 
 class DBranch(list):
     __keys__=('name',)

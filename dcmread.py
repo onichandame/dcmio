@@ -13,15 +13,11 @@ implicity=False
 littleEndian=True
 meta_length=0
 encoding=default_encoding
+from _uid_dict import UID_dictionary
 
 raw_info=namedtuple('raw_info',('tag','VR','leng',))
 _branches_=('tag','VR','VM','name','value')
 attribute=namedtuple('attribute',_branches_)
-
-ExplicitVRLittleEndian = '1.2.840.10008.1.2.1'
-ImplicitVRLittleEndian = '1.2.840.10008.1.2'
-DeflatedExplicitVRLittleEndian = '1.2.840.10008.1.2.1.99'
-ExplicitVRBigEndian = '1.2.840.10008.1.2.2'
 
 python_encoding = {
 
@@ -232,6 +228,10 @@ def read_metainfo(read):
         attr_leng=read_attribute_leng(read)
         result.add_attribute(attr_leng[0])
         locator=locator+attr_leng[1]
+    if result.get_value('value',tag=0x00020002) in UID_dictionary:
+        result.set_value(UID_dictionary[result.get_value('value',tag=0x00020002)][0],'value',tag=0x00020002)
+    if result.get_value('value',tag=0x00020010) in UID_dictionary:
+        result.set_value(UID_dictionary[result.get_value('value',tag=0x00020010)][0],'value',tag=0x00020010)
     return result
 
 def read_dataset(read,metainfo):
@@ -240,28 +240,9 @@ def read_dataset(read,metainfo):
         raise TypeError('The metainfo passed to dataset reader is not of the type DTree')
     for i in _branches_:
         result.add_branch(i)
-    imp_le=metainfo.get_value(tag=0x00020010)
-    if imp_le.endswith(' ') or imp_le.endswith('\x00'):
-        imp_le=imp_le[:-1]
-    if imp_le==ExplicitVRLittleEndian:
-        implicity=False
-        littleEndian=True
-    elif imp_le==ImplicitVRLittleEndian:
-        implicity=True
-        littleEndian=True
-    elif imp_le==ExplicitVRBigEndian:
-        implicity=False
-        littleEndian=False
-    elif imp_le==DeflatedExplicitVRLittleEndian:
-        zipped=read()
-        unzipped=zlib.decompress(zipped,-zlib.MAX_WBITS)
-        read=getattr(BytesIO(unzipped),"read")
-        self.read=read
-        implicity=False
-        littleEndian=True
-    else:
-        implicity=True
-        littleEndian=True
+    imp_le=metainfo.get_value('value',tag=0x00020010)
+    implicity=('Implicit' in imp_le)
+    littleEndian=("Little Endian" in imp_le)
     encoding=default_encoding
     charset=read_attribute_leng(read,implicity=implicity,littleEndian=littleEndian,encoding=encoding)
     if getattr(charset[0],'tag') != 0x00080005:
@@ -296,10 +277,11 @@ def read_attribute_leng(read,**kwargs):
     raw_info_leng=read_raw_meta_leng(read,**kwargs)
     if raw_info_leng==b'':
         return None
+    offset=offset+raw_info_leng[1]
     fine_metadata=_fine_metadata_(raw_info_leng[0])
     if getattr(fine_metadata,'VR')!='SQ':
-        offset=offset+raw_info_leng[1]+getattr(raw_info_leng[0],'leng')
         raw_val=read(getattr(raw_info_leng[0],'leng'))
+        offset=offset+getattr(raw_info_leng[0],'leng')
         val=read_value(raw_val,getattr(fine_metadata,'VR'),**kwargs)
     else:
         offset=offset+raw_info_leng[1]
@@ -612,7 +594,7 @@ def _fine_metadata_(raw_tag):
         name=DicomDictionary[tag][2]
     else:
         VM=None
-        name=None
+        name=''
     result=attribute(tag,VR,VM,name,None)
     return result
 
