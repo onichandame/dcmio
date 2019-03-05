@@ -60,11 +60,14 @@ def main():
     timer=time.time()
     dcm=dcm_read(file_name)
     print ('The reading of dcm file takes {} seconds'.format(time.time()-timer))
+    timer=time.time()
     write_to_csv(dcm,outpath,file_name,_is_pixel_)
-    print(dcm.get_value('value',tag=0x00020002))
+    print ('The writing to csv files takes {} seconds'.format(time.time()-timer))
     if if_tree:
         from treeview import write_tree
+        timer=time.time()
         write_tree(dcm,outpath,file_name)
+        print ('The writing to treeview takes {} seconds'.format(time.time()-timer))
 
 if __name__=='__main__':
     main()

@@ -158,7 +158,7 @@ class DTree(list):
         _conditions_=self._get_condition_(*args,**kwargs)
         result=[]
         for key, value in _conditions_.items():
-            index=0
+            index=-1
             for i in self.get_branch(key):
                 if isinstance(value,list):
                     if i in value:
@@ -169,7 +169,6 @@ class DTree(list):
                         index=self.get_branch(key).index(i,index+1)
                         result.append(index)
         result=set(result)
-        print (result)
         return result
     def _check_branch_(self,branches):
         result=branches
