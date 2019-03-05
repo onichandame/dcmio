@@ -61,6 +61,7 @@ def main():
     dcm=dcm_read(file_name)
     print ('The reading of dcm file takes {} seconds'.format(time.time()-timer))
     write_to_csv(dcm,outpath,file_name,_is_pixel_)
+    print(dcm.get_value('value',tag=0x00020002))
     if if_tree:
         from treeview import write_tree
         write_tree(dcm,outpath,file_name)

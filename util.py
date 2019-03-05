@@ -23,6 +23,10 @@ def _delete(*args,**kwargs):
 def write_to_csv(_tree_,outpath,file_name,_is_pixel_):
     from copy import deepcopy
     tree=deepcopy(_tree_)
+    _indices_=tree._get_index_(VR='SQ')
+    if _indices_:
+        for i in _indices_:
+            tree.set_value(len(tree.get_value(i)),'value',i)
     file_name=os.path.basename(file_name)
     tree.del_attributes(tag=0x7fe00010)
     if len(tree)==0:

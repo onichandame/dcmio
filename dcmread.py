@@ -1,5 +1,5 @@
 from struct import (calcsize,unpack)
-from error import (InvalidSQError,InvalidPixelDimension,ItemNotFound,VRNotSpecified)
+from error import (InvalidDicomError,InvalidSQError,InvalidPixelDimension,ItemNotFound,VRNotSpecified)
 from collections import namedtuple
 from struct import (Struct, pack, unpack)
 from dtree import DTree
@@ -284,7 +284,6 @@ def read_attribute_leng(read,**kwargs):
         offset=offset+getattr(raw_info_leng[0],'leng')
         val=read_value(raw_val,getattr(fine_metadata,'VR'),**kwargs)
     else:
-        offset=offset+raw_info_leng[1]
         sqval_leng=read_sequence_leng(read,**dict(kwargs,length=getattr(raw_info_leng[0],'leng')))
         if sqval_leng[1]!=getattr(raw_info_leng[0],'leng'):
             raise InvalidDicomError('Detected a mismatch of the sum of length of items and the length of the sequence')

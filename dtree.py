@@ -122,7 +122,6 @@ class DTree(list):
         result=result+'\r\n'
         if _tree_:
             for i in range(_tree_.get_length()):
-                print(str(i+1)+'/'+str(_tree_.get_length()))
                 result=result+'|'
                 for key,value in length.items():
                     _value_=str(_tree_.get_branch(key)[i])
@@ -159,14 +158,18 @@ class DTree(list):
         _conditions_=self._get_condition_(*args,**kwargs)
         result=[]
         for key, value in _conditions_.items():
+            index=0
             for i in self.get_branch(key):
                 if isinstance(value,list):
                     if i in value:
-                        result.append(self.get_branch(key).index(i))
+                        index=self.get_branch(key).index(i,index+1)
+                        result.append(index)
                 else:
                     if i==value:
-                        result.append(self.get_branch(key).index(i))
+                        index=self.get_branch(key).index(i,index+1)
+                        result.append(index)
         result=set(result)
+        print (result)
         return result
     def _check_branch_(self,branches):
         result=branches
@@ -297,14 +300,21 @@ class DTree(list):
             raise DuplicatedBranchError()
         if not self._is_equal_length_():
             raise LengthNotEqual()
-        _indices_=self._get_index_(*args,**kwargs)
-        if len(_indices_)!=1:
-            raise TypeError('The condition specified has no matched result')
-        for i in _indices_:
-            _indices_=i
-            break
-        if len(args)!=1:
-            raise TypeError('The specified branch must be unique')
+        if kwargs:
+            _indices_=self._get_index_(*args,**kwargs)
+            if len(_indices_)!=1:
+                raise TypeError('The condition specified has no matched result')
+            for i in _indices_:
+                _indices_=i
+                break
+            if len(args)!=1:
+                raise TypeError('The specified branch must be unique')
+        else:
+            if len(args)!=2:
+                raise TypeError()
+            if not isinstance(args[1],int):
+                raise TypeError()
+            _indices_=args[1]
         if args[0] not in self._get_branches_():
             raise BranchNotDeclared('The specified branch is not present')
         self.get_branch(args[0])[_indices_]=newval

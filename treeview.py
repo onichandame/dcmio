@@ -18,6 +18,8 @@ def _get_line_(ds,index,is_end):
     return line
 
 def write_tree(ds,outpath,file_name):
+    import os
+    file_name=os.path.basename(file_name)
     if len(ds)==0:
         raise EmptySequenceError('empty DTree is not yet supported') #To do: add support of empty sequence
     elif ds.get_length()==0:
