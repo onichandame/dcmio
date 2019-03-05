@@ -29,8 +29,6 @@ def write_to_csv(_tree_,outpath,file_name,_is_pixel_):
         raise EmptyListError()
     _delete(suffix='header.csv',path=outpath,filename=file_name)
     fullname=outpath+file_name+'-header.csv'
-    print (file_name)
-    print (fullname)
     with open(fullname,'w') as fileWrite:
         writer=csv.writer(fileWrite,delimiter=',')
         _branches_=[]

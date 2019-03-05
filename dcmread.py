@@ -324,7 +324,7 @@ def read_sequence_leng(read,**kwargs):
         elif key=='encoding':
             encoding=value
         elif key=='level':
-            level=value
+            level=value+1
         elif key=='length':
             length=value
     offset=0

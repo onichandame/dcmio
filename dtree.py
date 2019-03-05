@@ -84,6 +84,9 @@ class DTree(list):
                 _tree_[_tree_.index(i)]=i[:_max_entries_]
             if not _tree_._is_equal_length_():
                 raise LengthNotEqual()
+        for i in _tree_.get_branch('value'):
+            if len(str(i))>60:
+                _tree_.get_branch('value')[_tree_.get_branch('value').index(i)]=len(str(i))
         length={}
         for i in _tree_:
             length[i.get_metainfo()['name']]=len(i.get_metainfo()['name'])
@@ -98,7 +101,7 @@ class DTree(list):
         if not _tree_:
             result=result+'No. of attributes: '+str(0)+'\r\n'
         else:
-            result=result+'No. of attributes: '+str(len(_tree_[0]))+'\r\n'
+            result=result+'No. of attributes: '+str(_tree_.get_length())+'\r\n'
         _total_length_=1
         for key,value in length.items():
             _total_length_=_total_length_+value+1
@@ -118,10 +121,12 @@ class DTree(list):
             result=result+'-'*value+'+'
         result=result+'\r\n'
         if _tree_:
-            for i in range(len(_tree_[0])):
+            for i in range(_tree_.get_length()):
+                print(str(i+1)+'/'+str(_tree_.get_length()))
                 result=result+'|'
                 for key,value in length.items():
-                    result=result+str(_tree_.get_branch(key)[i])+' '*(value-len(str(_tree_.get_branch(key)[i])))+'|'
+                    _value_=str(_tree_.get_branch(key)[i])
+                    result=result+_value_+' '*(value-len(_value_))+'|'
                 result=result+'\r\n+'
                 for key,value in length.items():
                     result=result+'-'*value+'+'
@@ -230,6 +235,11 @@ class DTree(list):
         else:
             return len(self[0])
     def get_value(self,*args,**kwargs):
+        if len(args)==1:
+            if isinstance(args[0],int):
+                return self.get_branch('value')[args[0]]
+            else:
+                raise TypeError('The required type is integer but received {}'.format(type(args[0])))
         searched=self.get_attributes(*args,**kwargs)
         if searched.get_length()==1:
             result=searched.get_branch('value')[0]

@@ -63,6 +63,7 @@ def main():
     write_to_csv(dcm,outpath,file_name,_is_pixel_)
     if if_tree:
         from treeview import write_tree
-        write_tree(tree,outpath,file_name)
+        write_tree(dcm,outpath,file_name)
+
 if __name__=='__main__':
     main()
