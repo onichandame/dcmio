@@ -1,5 +1,6 @@
 import getopt
 import sys
+import os
 from error import InputFileError
 def get_config():
     from dcmread import decodeStr
@@ -19,7 +20,7 @@ def get_config():
         if 'pixel' not in result:
             result['pixel']=False
         if 'outpath' not in result:
-            result['outpath']="./test/"
+            result['outpath']=os.path.join(os.getcwd(),"test")
         if 'filename' not in result:
             raise InputFileError('The input DICOM file is not specified',)
         if 'tree' not in result:

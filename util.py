@@ -6,19 +6,14 @@ import os
 
 def _delete(*args,**kwargs):
     for key,value in kwargs.items():
-        if key=='suffix':
-            suffix=value
-        elif key=='path':
-            path=value
-        elif key=='filename':
+        if key=='filename':
             filename=value
-    if not suffix or not path or not filename:
+    if not filename:
         raise SyntaxError('The _delete function requires all arguments to be defined')
-    fullname=path+filename+'-'+suffix
-    if not os.path.exists(path):
-        os.mkdir(path)
-    if os.path.exists(fullname):
-        os.remove(fullname)
+    if not os.path.exists(os.path.dirname(filename)):
+        os.mkdir(os.path.dirname(filename))
+    if os.path.exists(filename):
+        os.remove(filename)
 
 def write_to_csv(_tree_,outpath,file_name,_is_pixel_):
     from copy import deepcopy
@@ -31,8 +26,8 @@ def write_to_csv(_tree_,outpath,file_name,_is_pixel_):
     tree.del_attributes(tag=0x7fe00010)
     if len(tree)==0:
         raise EmptyListError()
-    _delete(suffix='header.csv',path=outpath,filename=file_name)
-    fullname=outpath+file_name+'-header.csv'
+    fullname=os.path.join(outpath,file_name+'-header.csv')
+    _delete(filename=fullname)
     with open(fullname,'w') as fileWrite:
         writer=csv.writer(fileWrite,delimiter=',')
         _branches_=[]
@@ -45,8 +40,9 @@ def write_to_csv(_tree_,outpath,file_name,_is_pixel_):
                 lst.append(j[i])
             writer.writerow(lst)
     if _is_pixel_:
-        _delete(suffix='pixel.csv',filename=file_name,path=outpath)
-        with open(outpath+file_name+"-pixel.csv",'w') as fileWrite:
+        fullname=os.path.join(outpath,file_name+'-pixel.csv')
+        _delete(filename=fullname)
+        with open(fullname,'w') as fileWrite:
             writer=csv.writer(fileWrite,delimiter=',')
             if 'CT Image Storage' in _tree_.get_value('value',tag=0x00020002):
                 pix_attr=None
