@@ -84,9 +84,10 @@ class DTree(list):
                 _tree_[_tree_.index(i)]=i[:_max_entries_]
             if not _tree_._is_equal_length_():
                 raise LengthNotEqual()
-        for i in _tree_.get_branch('value'):
-            if len(str(i))>60:
-                _tree_.get_branch('value')[_tree_.get_branch('value').index(i)]=len(str(i))
+        if 'value' in _tree_._get_branches_():
+            for i in _tree_.get_branch('value'):
+                if len(str(i))>60:
+                    _tree_.get_branch('value')[_tree_.get_branch('value').index(i)]=len(str(i))
         length={}
         for i in _tree_:
             length[i.get_metainfo()['name']]=len(i.get_metainfo()['name'])
