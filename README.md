@@ -12,7 +12,7 @@ The motivation comes from the development of NeuboronPlan. The final goal of thi
 
 ## Instruction
 
-This section describes the basic structure and designated usage of **dcmio**
+This section describes the basic structure and the designated usage of **dcmio**
 
 ### Read DICOM
 
@@ -24,9 +24,15 @@ To run **dcmio**, you need to install python 3.X
 ./test.py -i <input DICOM path(with filename)> -o <output csv path(without filename)> <-p> <-t>
 ```
 
-Add `-p` if you want to output pixel data instead of DICOM header
+This command will always output header file as a *.csv* table.
 
-Add `-t` if you want to save the tree view diagram in *treeview.txt* in the output path
+Add `-p` if you want to output pixel data together with the DICOM header
+
+Add `-t` if you want to save the tree view diagram in *<input filename>-treeview.txt* in the output path
+
+To do:
+- read from multiple DICOM files in directories of customized levels.
+- write to DICOM RT-Structure
 
 #### Windows
 
@@ -34,16 +40,12 @@ Don't know yet
 
 ### Basic Structure
 
-The returned object by calling `dcmRead` is a list of attributes. For definition of attribute, see <http://dicom.nema.org/medical/dicom/current/output/html/part01.html#chapter_3>
+The returned object by calling `dcm_read` is a DTree instance. The structure of DTree is basically a table (in the context of database). For more details, see <https://en.wikipedia.org/wiki/Table_(database)>.
 
-Each attribute consists of a `tag` object and a `value` object
+Keeping the concept of columns and rows of databases in mind, each row in DTree represents an attribute in DICOM IOD. For the definition of attribute, see <http://dicom.nema.org/medical/dicom/current/output/html/part01.html#chapter_3>
 
-#### tag
+The DTree has 5 branches of type DBranch: tag(xxxx,xxxx), VR(xx), VM(x), name, value. Each branch is filled with the values of the type indicated by the name of the branch.
 
-|   code  | VR | VM | name |
-| -------- | -- | -- | ---- |
-| \<8-digit hex number\> | \<2-char\> | \<1-digit decimal(1-4)\> | \<string\> |
+### Example Usage
 
-#### value
-
-The type of value depends on the VR of the corresponding tag. Python normally disregards type so the user may read the value regardless of the type. But you need to KNOW what the type it should be in case you need to manipulate the `attribute` object directly
+The designated use cases where **dcmio** will be called is reading from and writing to DICOM files.

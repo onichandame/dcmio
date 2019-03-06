@@ -6,39 +6,27 @@
 <h2><a id="GoalMotivation_8"></a>Goal&amp;Motivation</h2>
 <p>The motivation comes from the development of NeuboronPlan. The final goal of this toolkit is to support the NeuboronPlan project</p>
 <h2><a id="Instruction_12"></a>Instruction</h2>
-<p>This section describes the basic structure and designated usage of <strong>dcmio</strong></p>
+<p>This section describes the basic structure and the designated usage of <strong>dcmio</strong></p>
 <h3><a id="Read_DICOM_16"></a>Read DICOM</h3>
 <h4><a id="Linux_18"></a>Linux</h4>
 <p>To run <strong>dcmio</strong>, you need to install python 3.X</p>
 <pre><code class="language-bash">./test.py -i &lt;input DICOM path(with filename)&gt; -o &lt;output csv path(without filename)&gt; &lt;-p&gt; &lt;-t&gt;
 </code></pre>
-<p>Add <code>-p</code> if you want to output pixel data instead of DICOM header</p>
-<p>Add <code>-t</code> if you want to save the tree view diagram in <em>treeview.txt</em> in the output path</p>
-<h4><a id="Windows_30"></a>Windows</h4>
+<p>This command will always output header file as a <em>.csv</em> table.</p>
+<p>Add <code>-p</code> if you want to output pixel data together with the DICOM header</p>
+<p>Add <code>-t</code> if you want to save the tree view diagram in <em>&lt;input filename&gt;-treeview.txt</em> in the output path</p>
+<p>To do:</p>
+<ul>
+<li>read from multiple DICOM files in directories of customized levels.</li>
+<li>write to DICOM RT-Structure</li>
+</ul>
+<h4><a id="Windows_36"></a>Windows</h4>
 <p>Don’t know yet</p>
-<h3><a id="Basic_Structure_34"></a>Basic Structure</h3>
-<p>The returned object by calling <code>dcmRead</code> is a list of attributes. For definition of attribute, see <a href="http://dicom.nema.org/medical/dicom/current/output/html/part01.html#chapter_3">http://dicom.nema.org/medical/dicom/current/output/html/part01.html#chapter_3</a></p>
-<p>Each attribute consists of a <code>tag</code> object and a <code>value</code> object</p>
-<h4><a id="tag_40"></a>tag</h4>
-<table class="table table-striped table-bordered">
-<thead>
-<tr>
-<th>code</th>
-<th>VR</th>
-<th>VM</th>
-<th>name</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>&lt;8-digit hex number&gt;</td>
-<td>&lt;2-char&gt;</td>
-<td>&lt;1-digit decimal(1-4)&gt;</td>
-<td>&lt;string&gt;</td>
-</tr>
-</tbody>
-</table>
-<h4><a id="value_46"></a>value</h4>
-<p>The type of value depends on the VR of the corresponding tag. Python normally disregards type so the user may read the value regardless of the type. But you need to KNOW what the type it should be in case you need to manipulate the <code>attribute</code> object directly</p>
+<h3><a id="Basic_Structure_40"></a>Basic Structure</h3>
+<p>The returned object by calling <code>dcm_read</code> is a DTree instance. The structure of DTree is basically a table (in the context of database). For more details, see <a href="https://en.wikipedia.org/wiki/Table_(database)">https://en.wikipedia.org/wiki/Table_(database)</a>.</p>
+<p>Keeping the concept of columns and rows of databases in mind, each row in DTree represents an attribute in DICOM IOD. For the definition of attribute, see <a href="http://dicom.nema.org/medical/dicom/current/output/html/part01.html#chapter_3">http://dicom.nema.org/medical/dicom/current/output/html/part01.html#chapter_3</a></p>
+<p>The DTree has 5 branches of type DBranch: tag(xxxx,xxxx), VR(xx), VM(x), name, value. Each branch is filled with the values of the type indicated by the name of the branch.</p>
+<h3><a id="Example_Usage_48"></a>Example Usage</h3>
+<p>The designated use cases where <strong>dcmio</strong> will be called is reading from and writing to DICOM files.</p>
 
 </body></html>
