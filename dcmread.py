@@ -248,6 +248,7 @@ def read_dataset(read,metainfo):
     if getattr(charset[0],'tag') != 0x00080005:
         raise InvalidDicomError('Couldn\'t find the expected (0008,0005) attribute')
     encoding=convert_encoding(getattr(charset[0],'value'),littleEndian)
+    result.add_attribute(charset[0])
     try:
         while True:
             attr_leng=read_attribute_leng(read,implicity=implicity,littleEndian=littleEndian,encoding=encoding,level=0)
