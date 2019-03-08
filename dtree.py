@@ -318,6 +318,9 @@ class DTree(list):
         if args[0] not in self._get_branches_():
             raise BranchNotDeclared('The specified branch is not present')
         self.get_branch(args[0])[_indices_]=newval
+    """This methods is designed to write DTree instances to file(s)
+    """
+    def write(self,*args,**kwargs):
 
 class DBranch(list):
     __keys__=('name',)
