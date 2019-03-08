@@ -59,9 +59,9 @@ The good thing about git is that it makes branching very easy. A branch is simpl
 
 The simplest application of branch is using `master` and `development` branches. In this way, the `master` branch stays untouched until the development branch is well tested and validated.
 
-The example is *dcmio*. Since the validation of the first version of the code, I have frozen the `master` branch until now. When I started re-working the data structure of dcmio, I created another branch called `dbranch`. All modification are saved to this branch. The obvious benefit is that I can mess up my own branch while keeping the `master` branch unchanged.
+The example is *dcmio*. Since the validation of the first version of the code, I have frozen the `master` branch until now. When I started re-working the data structure of dcmio, I created another branch called `dev`. All modification are saved to this branch. The obvious benefit is that I can mess up my own branch while keeping the `master` branch unchanged.
 
-In the case of *dcmio*, The `master` branch stays where the most recently validated version is. the `dev` branch stays where some minor changes were made to the most recently validated version. The `dbranch` branch keeps the track of my recent work including the re-work.
+In the case of *dcmio*, The `master` branch stays where the most recently validated version is. the `dev` branch keeps the track of my recent work including the re-work.
 
 Enough wording, now I will introduce the method to get different version from the git server.
 
@@ -85,7 +85,7 @@ Enough wording, now I will introduce the method to get different version from th
 
    * select 'Tracking Branch' and you can see a list of 'origin/\*' items. These are branch fetched from the server
 
-   * Choose 'origin/dbranch' then **Checkout**. Now you are at a remote branch. git is designed to store everythin locally, so you need to make a local branch now
+   * Choose 'origin/dev' then **Checkout**. Now you are at a remote branch. git is designed to store everythin locally, so you need to make a local branch now
 
    * Again go to **Branch** then **Create**
 
@@ -97,4 +97,4 @@ Enough wording, now I will introduce the method to get different version from th
 
    * select 'Local Branch' then **Checkout**
 
-4. Now go to the folder where *dcmio* is stored and you have the latest developing version of branch `dbranch`
+4. Now go to the folder where *dcmio* is stored and you have the latest developing version of branch `dev`
