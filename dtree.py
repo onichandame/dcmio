@@ -321,17 +321,67 @@ class DTree(list):
         self.get_branch(args[0])[_indices_]=newval
     """From this line down, methods are only desighed for use in DICOM format: 5 branches(tag,VR,VM,name,value)
     """
-    def _to_bin_(self,index,*args,**kwargs):
-        for i in self._get_branches_():
-            if i not in _dicom_branches_:
+    def _value_to_bin_(self,index,**kwargs):
+        _param_={}
+        _param_['littleEndian']=True
+        from dcmread import default_encoding
+        _param_['encoding']=default_encoding
+        for key,value in kwargs.items():
+            if key in _param_.keys():
+                _param_[key]=value
+        VR=self.get_branch('VR')[index]
+        value=self.get_branch('value')[index]
+        from dcmread import text_VRs
+        if VR in text_VRs:
+            if len(value)%2!=0:
+                value=value+'\0'
+            result=value.encode(_param_['encode'],'strict')
+        else:
+            if len(value)%2!=0:
+                value=str(value)+' '
+            result=value.encode(_param_['encode'],'strict')
+        return result
+    def _attribute_to_bin_(self,index,*args,**kwargs):
+        for i in self._dicom_branches_:
+            if i not in self._get_branches_():
                 raise TypeError('The DTree instance does not hold the structure of DICOM')
         if self._is_duplicated_branch_():
             raise DuplicatedBranchError()
         if not self._is_equal_length_():
             raise LengthNotEqual()
-        if index<0 or index>len(self._get_branches_()-1):
-            raise IndexError('The index received has exceeded the allowed range')
-        tag=self.get_branch('tag')[index]
+        _param_={}
+        _param_['littleEndian']=True
+        _param_['implicity']=False
+        from dcmread import default_encoding
+        _param_['encoding']=default_encoding
+        for key,value in kwargs.items():
+            if key in _param_.keys():
+                _param_[key]=value
+        if _param_['littleEndian']:
+            _end_char_='<'
+        else:
+            _end_char_='>'
+        _struct_param_=_end_char_+'HH'
+        _struct_=[]
+        _tag_=self.get_branch('tag')[index]
+        _struct_.append(_tag_>>16,_tag_&0xffff)
+        _bin_value_=_value_to_bin_(index)
+        _bin_leng_=len(_bin_value_)
+        if _param_['implicity']:
+            _struct_VR_leng_='L'
+            _struct_.append(_bin_leng_)
+        else:
+            _struct_VR_leng_='2sH'
+            _struct_.append(self.get_branch('VR')[index])
+            _struct_.append(_bin_leng_)
+        _struct_param_=_struct_param_+_struct_VR_leng_
+        from struct import Struct
+        _meta_struct_pack=Struct(_struct_param_).pack
+        if index<self.get_length():
+            result=_meta_struct_pack(_struct_)
+        else:
+            raise IndexError('The passed index has exceeded the allowed range')
+        return result
     """This methods is designed to write DTree instances to file(s)
     input: *outpath
            *filename
@@ -339,6 +389,32 @@ class DTree(list):
            littleEndian
            encoding
     """
+    def _header_to_bin_(self):
+        for i in self._dicom_branches_:
+            if i not in self._get_branches_():
+                raise TypeError('The DTree instance does not hold the structure of DICOM')
+        if self._is_duplicated_branch_():
+            raise DuplicatedBranchError()
+        if not self._is_equal_length_():
+            raise LengthNotEqual()
+        _tag_=self.get_branch('tag')
+        _header_indices_=[]
+        for i in _tag_:
+            if not isinstance(i,int):
+                raise TypeError('The expected type is int but received {}'.format(type(i)))
+            if i<<16 == 0x0002:
+                _header_indices_.append(_tag_.index(i))
+        if not _header_indices_:
+            raise NotImplementedError('Currently dcmio is not capable of dealing with files without DICOM header')
+        result=b''
+        for i in _header_indices_:
+            if self.get_branch('tag')[i]==0x00020000:
+                continue
+            result=result+_attribute_to_bin_(i)
+        header_len=len(result)
+        header_len_value=
+        result=Struct('<HH2sH').pack(0x0002,0x0000,'UL',)
+        return result
     def write(self,*args,**kwargs):
         _neccessary_input_=('outpath','filename','max_byte')
         _all_input_=_neccessary_input_+('max_byte','littleEndian','encoding')
@@ -358,7 +434,12 @@ class DTree(list):
                 elif i=='encoding':
                     from dcmread import default_encoding
                     config[i]=default_encoding
-        total_byte=0
+        _header_bin_=self._header_to_bin_()
+        _data_bin_=self._data_to_bin_()
+        _bin_=_header_to_bin_+_data_to_bin_
+        with open(outpath+filename,'wb') as filewriter:
+            filewriter.write(_header_to_bin_+_data_to_bin_)
+
 
 class DBranch(list):
     __keys__=('name',)
