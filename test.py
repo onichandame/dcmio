@@ -46,7 +46,6 @@ def bytes2hex(byte):
     """
 
 def main():
-    #To do: check python
     config=get_config()
     for key,value in config.items():
         if key=='pixel':

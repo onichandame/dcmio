@@ -3,6 +3,7 @@
 from error import (BranchNotDeclared,LengthNotEqual,DuplicatedBranchError,BranchNotEqual,ValueNotUnique)
 class DTree(list):
     __keys__= ('name','level','index')
+    _dicom_branches_=('tag','VR','VM','name','value')
     def __init__(self,*args,**kwargs):
         self.__metainfo__={}
         self.set_metainfo(self,*args,**kwargs)
@@ -318,9 +319,46 @@ class DTree(list):
         if args[0] not in self._get_branches_():
             raise BranchNotDeclared('The specified branch is not present')
         self.get_branch(args[0])[_indices_]=newval
+    """From this line down, methods are only desighed for use in DICOM format: 5 branches(tag,VR,VM,name,value)
+    """
+    def _to_bin_(self,index,*args,**kwargs):
+        for i in self._get_branches_():
+            if i not in _dicom_branches_:
+                raise TypeError('The DTree instance does not hold the structure of DICOM')
+        if self._is_duplicated_branch_():
+            raise DuplicatedBranchError()
+        if not self._is_equal_length_():
+            raise LengthNotEqual()
+        if index<0 or index>len(self._get_branches_()-1):
+            raise IndexError('The index received has exceeded the allowed range')
+        tag=self.get_branch('tag')[index]
     """This methods is designed to write DTree instances to file(s)
+    input: *outpath
+           *filename
+           max_byte
+           littleEndian
+           encoding
     """
     def write(self,*args,**kwargs):
+        _neccessary_input_=('outpath','filename','max_byte')
+        _all_input_=_neccessary_input_+('max_byte','littleEndian','encoding')
+        config={}
+        for key,value in kwargs.items():
+            if key in _all_input_:
+                config[key]=value
+        for i in _neccessary_input_:
+            if i not in config.keys():
+                raise KeyError('An argument {} is missing in the passed arguments'.format(i))
+        for i in _all_input_:
+            if i not in config.keys():
+                if i=='max_byte':
+                    config[i]=10000000
+                elif i=='littleEndian':
+                    config[i]=True
+                elif i=='encoding':
+                    from dcmread import default_encoding
+                    config[i]=default_encoding
+        total_byte=0
 
 class DBranch(list):
     __keys__=('name',)
