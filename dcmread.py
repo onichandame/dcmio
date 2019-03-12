@@ -66,83 +66,6 @@ def integrate_tag(grp,elm):
     result=grp<<16|elm
     return result
 
-"""This function reads in byte from a DICOM attribute and yield it as a rawAttribute instance
-
-"""
-def genRawAttribute(testFile,read):
-    global littleEndian
-    global implicity
-    global meta_length
-    global encoding
-    local_encoding=encoding
-    if testFile.tell()<meta_length:
-        local_implicity=False
-        local_littleEndian=True
-    else:
-        local_implicity=implicity
-        local_littleEndian=littleEndian
-    tag_struct_unpack=_set_struct_unpack_(local_implicity,local_littleEndian)
-    """
-    with open("write.test",'ab') as fileWrite:
-        fileWrite.write(str(testFile.tell())+'\n')
-        """
-    header=read(8)
-    if len(header)<8:
-        return
-    if local_implicity:
-        VR=None
-        group,elem,leng=tag_struct_unpack(header)
-    else:
-        group,elem,VR,leng=tag_struct_unpack(header)
-        VR=VR.decode(default_encoding)
-        if VR in extra_length_VRs:
-            extra_leng=read(4)
-            extraLengStructUnpack=_set_struct_unpack_(local_implicity,local_littleEndian,True)
-            leng=extraLengStructUnpack(extra_leng)[0]
-    tag=integrate_tag(group,elem)
-    if local_implicity and tag in DicomDictionary:
-        VR=DicomDictionary[tag][0]
-    elif local_implicity and tag not in DicomDictionary:
-        VR='UN'
-    if leng !=0xFFFFFFFF:  #check if the length is -1 or not. For VR='SQ', length could be -1. not considered yet
-        val=read(leng)
-        if tag==0x00080005:
-            encoding=convertEncoding(val,littleEndian)
-            if not encoding:
-                raise InvalidEncodingError()
-        if tag==0x00020010:
-            val=val.decode(default_encoding)
-            if val.endswith(' ') or val.endswith('\x00'):
-                val=val[:-1]
-            if val==ExplicitVRLittleEndian:
-                implicity=False
-                littleEndian=True
-            elif val==ImplicitVRLittleEndian:
-                implicity=True
-                littleEndian=True
-            elif val==ExplicitVRBigEndian:
-                implicity=False
-                littleEndian=False
-            elif val==DeflatedExplicitVRLittleEndian:
-                zipped=read()
-                unzipped=zlib.decompress(zipped,-zlib.MAX_WBITS)
-                read=getattr(BytesIO(unzipped),"read")
-                self.read=read
-                implicity=False
-                littleEndian=True
-            else:
-                implicity=True
-                littleEndian=True
-        raw_tag=raw_info(tag,VR,leng,local_littleEndian,local_implicity,local_encoding)
-        yield (raw_tag,val)
-    else:
-        pass
-        """To do: include handle for VR="SQ" and error
-        if VR == 'SQ':
-        elif VR is None:
-        else:
-            """
-
 def is_dicom(read):
     result=False
     byte=read(128)  # Preamble. Currently useless
@@ -153,45 +76,6 @@ def is_dicom(read):
     else:
         print ("This is not a valid DICOM file")
         result=False
-    return result
-
-
-
-"""This block reads in the bytes after the magic word and return a dataset of all values except pixels
-"""
-def dcmRead(file_name):
-    result=DTree(name=file_name.split('.')[0])
-    for i in _branches_:
-        result.add_branch(i)
-    with open(file_name,'rb') as testFile:
-        read=getattr(testFile,"read")
-        __validity__=isDICOM(read)
-        if not __validity__:
-            raise InvalidDicomError()
-        global meta_length
-        try:
-            while True:
-                raw_gen=genRawAttribute(testFile,read)
-                raw_attr=next(raw_gen)
-                """
-                with open("write.test",'ab') as fileWrite:
-                    fileWrite.write(str(raw_attr)+'\n')
-                    """
-                raw_tag=raw_attr[0]
-                val=raw_attr[1]
-                fine_metadata=_fine_metadata_(raw_attr[1])
-                for i in _branches_:
-                    if i != 'value':
-                        result.add_leaf(branch=i,value=getattr(fine_metadata,i))
-                result.add_leaf(branch=_branches_[4],value=readValue(raw_attr))
-                if tag==0x00020000:
-                    meta_length=val+testFile.tell()
-                """
-                with open("write.test",'ab') as fileWrite:
-                    fileWrite.write(str(buf_attr)+'\n')
-                    """
-        except StopIteration:
-            pass
     return result
 
 def dcm_read(filename):
@@ -519,10 +403,8 @@ def decodeDT(byte,littleEndian,struct_format=None):
     val=byte.decode(default_encoding)
     val=val.split("\\")
     if len(val)==1:
-        result=val[0]
-    else:
-        result="".join(str(i) for i in val)
-    return result
+        val=val[0]
+    return val
 
 """This function decodes the AE values with starting and trailing zeros
 """
@@ -650,7 +532,7 @@ def convertCode(byte,littleEndian,start=0):
         struct_format="<HH"
     else:
         struct_format=">HH"
-        result=unpack(struct_format,byte[start:start+4])
+    result=unpack(struct_format,byte[start:start+4])
     return result
 def decodeAT(byte,littleEndian,struct_format=None):
     leng=len(byte)
