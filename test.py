@@ -58,8 +58,10 @@ def main():
             if_tree=value
     timer=time.time()
     dcm=dcm_read(file_name)
+    print(dcm)
     print ('The reading of dcm file takes {} seconds'.format(time.time()-timer))
-    dcm.write(outpath='./',filename='write.dcm')
+    from dcmwrite import write
+    write(dcm,outpath='./',filename='write.dcm')
     sys.exit()
     timer=time.time()
     write_to_csv(dcm,outpath,file_name,_is_pixel_)

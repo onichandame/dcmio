@@ -309,7 +309,8 @@ class DTree(list):
                 _indices_=i
                 break
             if len(args)!=1:
-                raise TypeError('The specified branch must be unique')
+                print(args)
+                raise TypeError('The branch specified must be unique')
         else:
             if len(args)!=2:
                 raise TypeError()
