@@ -60,9 +60,11 @@ def main():
     dcm=dcm_read(file_name)
     print(dcm)
     print ('The reading of dcm file takes {} seconds'.format(time.time()-timer))
+    """
     from dcmwrite import write
     write(dcm,outpath='./',filename='write.dcm')
     sys.exit()
+    """
     timer=time.time()
     write_to_csv(dcm,outpath,file_name,_is_pixel_)
     print ('The writing to csv files takes {} seconds'.format(time.time()-timer))
