@@ -8,7 +8,11 @@ Xiao Zhang
 
 ## Goal&Motivation
 
-The motivation comes from the development of NeuboronPlan. The final goal of this toolkit is to support the NeuboronPlan project
+The motivation comes from the development of a proprietary software in the company I work in. The final goal of this toolkit is to support the proprietary software
+
+## Current Status
+
+This project has been frozen because a toolkit which better suits out situation was found. Everyone is welcome to clone from, contribute to and redistribute it in any form so long as my comapny does not hold it back.
 
 ## Instruction
 
@@ -49,3 +53,5 @@ The DTree has 5 branches of type DBranch: tag(xxxx,xxxx), VR(xx), VM(x), name, v
 ### Example Usage
 
 The designated use cases where **dcmio** will be called is reading from and writing to DICOM files.
+
+The example of reading from a DICOM file has been given above. The example code used to write a DTree instance into a DICOM file has been give in the test.py code
