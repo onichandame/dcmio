@@ -6,6 +6,12 @@ A simple yet actively developing DICOM input/output toolkit. Currently only supp
 
 Xiao Zhang
 
+Special thank given to:
+
+- **Pei-Yi Lee** for doing the validation
+
+- **Wei-Lin Chen** for leading the project and firing the motivation
+
 ## Goal&Motivation
 
 The motivation comes from the development of a proprietary software in the company I work in. The final goal of this toolkit is to support the proprietary software
