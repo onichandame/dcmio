@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from io import BytesIO
 from binascii import (a2b_hex, b2a_hex)
