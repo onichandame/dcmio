@@ -1,12 +1,12 @@
 # dcmio
 
-A simple yet actively developing DICOM input/output toolkit. Currently only supports Python 3.X
+A simple DICOM input/output toolkit. Currently only supports Python 3.X
 
 ## Author
 
 Xiao Zhang
 
-Special thank given to:
+Special thanks given to:
 
 - **Pei-Yi Lee** for doing the validation
 
