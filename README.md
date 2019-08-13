@@ -4,7 +4,7 @@ A simple DICOM input/output toolkit. Currently only supports Python 3.X
 
 ## Author
 
-Xiao Zhang
+**Xiao Zhang**
 
 Special thanks given to:
 
@@ -18,7 +18,7 @@ The motivation comes from the development of a proprietary software in the compa
 
 ## Current Status
 
-This project has been frozen because a toolkit which better suits out situation was found. Everyone is welcome to clone from, contribute to and redistribute it in any form so long as my comapny does not hold it back.
+This project has been frozen because out development framework changed and a toolkit which better suits our new situation was found. Everyone is welcome to clone from, contribute to and redistribute it in any form so long as the license does not change.
 
 ## Instruction
 
@@ -50,9 +50,9 @@ Don't know yet
 
 ### Basic Structure
 
-The returned object by calling `dcm_read` is a DTree instance. The structure of DTree is basically a table (in the context of database). For more details, see <https://en.wikipedia.org/wiki/Table_(database)>.
+The returned object from calling `dcm_read` is a DTree instance. The structure of DTree is basically a relational table. For more details, see <https://en.wikipedia.org/wiki/Table_(database)>.
 
-Keeping the concept of columns and rows of databases in mind, each row in DTree represents an attribute in DICOM IOD. For the definition of attribute, see <http://dicom.nema.org/medical/dicom/current/output/html/part01.html#chapter_3>
+Each row in DTree represents an attribute in DICOM IOD. For the definition of attribute, see <http://dicom.nema.org/medical/dicom/current/output/html/part01.html#chapter_3>
 
 The DTree has 5 branches of type DBranch: tag(xxxx,xxxx), VR(xx), VM(x), name, value. Each branch is filled with the values of the type indicated by the name of the branch.
 
@@ -60,4 +60,4 @@ The DTree has 5 branches of type DBranch: tag(xxxx,xxxx), VR(xx), VM(x), name, v
 
 The designated use cases where **dcmio** will be called is reading from and writing to DICOM files.
 
-The example of reading from a DICOM file has been given above. The example code used to write a DTree instance into a DICOM file has been give in the test.py code
+The example of reading from a DICOM file has been given above. The example code used to write a DTree instance into a DICOM file has been give in the test.py file.
